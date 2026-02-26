@@ -1,0 +1,46 @@
+{
+  "transactions": [
+    {
+      "date": "2024-01-15T10:30:00Z",
+      "description": "SWIGGY ORDER TXN12345 food delivery",
+      "amount": 450.50,
+      "merchant": null,
+      "type": "expense"
+    },
+    {
+      "date": "2024-01-14T09:15:00Z",
+      "description": "UBER RIDE REF9876 transportation",
+      "amount": 120.00,
+      "merchant": null,
+      "type": "expense"
+    },
+    {
+      "date": "2024-01-13T15:45:00Z",
+      "description": "AMAZON PURCHASE electronics shopping",
+      "amount": 2500.00,
+      "merchant": null,
+      "type": "expense"
+    },
+    {
+      "date": "2024-01-12T08:00:00Z",
+      "description": "SALARY CREDIT monthly income",
+      "amount": 50000.00,
+      "merchant": null,
+      "type": "income"
+    },
+    {
+      "date": "2024-01-11T11:20:00Z",
+      "description": "ZERODHA SIP investment mutual fund",
+      "amount": 5000.00,
+      "merchant": null,
+      "type": "investment"
+    },
+    {
+      "date": "2024-01-10T20:30:00Z",
+      "description": "NETFLIX SUBSCRIPTION entertainment monthly",
+      "amount": 299.00,
+      "merchant": null,
+      "type": "expense"
+    }
+  ]
+}
