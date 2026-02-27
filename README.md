@@ -76,12 +76,11 @@ docker run -p 8000:8000 financial-intelligence-api
 
 ## Categories Supported
 
-- Food & Dining
-- Travel & Transportation
-- Shopping
-- Entertainment
-- Health & Medical
-- Utilities
-- Rent & Housing
-- Investments
-- Others (fallback)
+  FoodAndDining
+  Travel
+  Rent
+  Utilities
+  Shopping
+  Entertainment
+  Health
+  Others

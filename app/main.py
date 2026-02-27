@@ -17,7 +17,8 @@ from .services.insight_engine import InsightEngine
 from .services.financial_advisor import FinancialAdvisor
 from .database import get_db, create_tables
 from .models import Transaction, AnalyticsResult
-from .redis_client import RedisEventPublisher
+from .redis_client import RedisEventPublisher, CategoryType, InsightType
+from sqlalchemy import desc
 
 app = FastAPI(
     title="Financial Expense Intelligence API",
@@ -61,14 +62,50 @@ async def root():
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
 
+@app.get("/v1/transaction/{batch_id}")
+async def get_transaction_by_batch_id(batch_id: str, db: Session = Depends(get_db)):
+    """Get transactions by batch ID for Node.js integration"""
+    try:
+        # Get analytics result by batch ID
+        analytics_result = db.query(AnalyticsResult).filter(
+            AnalyticsResult.transaction_batch_id == batch_id
+        ).first()
+        
+        if not analytics_result:
+            raise HTTPException(status_code=404, detail="Batch ID not found")
+        
+        # Get all transactions for this batch
+        transactions = db.query(Transaction).filter(
+            Transaction.date >= analytics_result.created_at - timedelta(days=1)
+        ).order_by(desc(Transaction.created_at)).limit(1000).all()
+        
+        return {
+            "batchId": batch_id,
+            "analytics": analytics_result.to_dict(),
+            "transactions": [transaction.to_dict() for transaction in transactions],
+            "retrieved_at": datetime.utcnow().isoformat()
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Retrieval error: {str(e)}")
+
 @app.post("/analyze", response_model=TransactionResponse)
 async def analyze_transactions(request: TransactionRequest, db: Session = Depends(get_db)):
     try:
+        import time
+        start_time = time.time()
+        
         transactions = request.transactions
         batch_id = str(uuid.uuid4())
         
+        # Publish transactions uploaded event
+        redis_publisher.publish_transactions_uploaded(batch_id)
+        
         categorized_transactions = []
         stored_transactions = []
+        classified_data = []
         
         # Process and store each transaction
         for transaction in transactions:
@@ -99,10 +136,23 @@ async def analyze_transactions(request: TransactionRequest, db: Session = Depend
             db.add(db_transaction)
             stored_transactions.append(db_transaction)
             
-            # Publish transaction processed event
+            # Add to classified data for new event format
+            classified_data.append({
+                "transactionId": db_transaction.id,
+                "category": category,
+                "confidence": confidence
+            })
+            
+            # Publish transaction processed event (legacy)
             redis_publisher.publish_transaction_processed(db_transaction.to_dict())
         
         db.commit()
+        
+        # Calculate AI processing time
+        ai_processing_time_ms = int((time.time() - start_time) * 1000)
+        
+        # Publish transactions classified event
+        redis_publisher.publish_transactions_classified(batch_id, classified_data, ai_processing_time_ms)
         
         # Generate analytics
         analytics_summary = analytics_engine.compute_analytics(categorized_transactions)
@@ -129,9 +179,33 @@ async def analyze_transactions(request: TransactionRequest, db: Session = Depend
         # Generate insights
         insights = insight_engine.generate_insights(categorized_transactions)
         
-        # Store insights and publish event
+        # Convert insights to new format for Node.js
+        insights_data = []
+        for insight in insights:
+            # Map severity to InsightType
+            if insight.severity == 'high':
+                insight_type = InsightType.NEGATIVE
+            elif insight.severity == 'low':
+                insight_type = InsightType.POSITIVE
+            else:
+                insight_type = InsightType.NEUTRAL
+                
+            insights_data.append({
+                "title": insight.message,
+                "type": insight_type.value,
+                "confidence": 0.8,  # Default confidence for insights
+                "description": insight.message,
+                "suggestion": f"Review {insight.type} in your financial planning"
+            })
+        
+        # Store insights and publish events
         analytics_result.insights = [insight.dict() for insight in insights]
         db.commit()
+        
+        # Publish new insights event format
+        redis_publisher.publish_transactions_insight(batch_id, insights_data)
+        
+        # Publish legacy insights event
         redis_publisher.publish_insights_generated([insight.dict() for insight in insights], batch_id)
         
         # Generate financial advice

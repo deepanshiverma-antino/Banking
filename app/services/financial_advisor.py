@@ -19,7 +19,7 @@ class FinancialAdvisor:
             recommendations.append("Consider increasing investments to at least 15% of your income for long-term wealth building.")
         
         # Check discretionary spending
-        discretionary_categories = ['Food', 'Entertainment', 'Shopping']
+        discretionary_categories = ['FoodAndDining', 'Entertainment', 'Shopping']
         discretionary_spend = 0
         for category_total in analytics.category_totals:
             if category_total.category in discretionary_categories:
