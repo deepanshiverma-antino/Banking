@@ -2,10 +2,11 @@ services:
   # FastAPI Web Service
   - type: web
     name: financial-intelligence-api
-    env: python
+    runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
         value: 3.11
@@ -18,23 +19,15 @@ services:
           type: redis
           name: financial-redis
           property: connectionString
-    healthCheckPath: /health
-
-  # PostgreSQL Database
-  - type: pserv
-    name: financial-db
-    env: docker
-    plan: free
-    envVars:
-      - key: POSTGRES_USER
-        value: postgres
-      - key: POSTGRES_PASSWORD
-        generateValue: true
-      - key: POSTGRES_DB
-        value: banking_db
 
   # Redis Instance
   - type: redis
     name: financial-redis
     plan: free
     ipAllowList: []
+
+databases:
+  - name: financial-db
+    databaseName: banking_db
+    user: postgres
+    plan: free
