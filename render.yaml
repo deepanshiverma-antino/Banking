@@ -29,5 +29,4 @@ services:
 databases:
   - name: financial-db
     databaseName: banking_db
-    user: postgres
     plan: free
