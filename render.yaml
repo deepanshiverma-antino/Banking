@@ -25,7 +25,6 @@ services:
     name: financial-db
     env: docker
     plan: free
-    repo: https://github.com/render-examples/postgres
     envVars:
       - key: POSTGRES_USER
         value: postgres
