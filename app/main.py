@@ -19,6 +19,7 @@ from .database import get_db, create_tables
 from .models import Transaction, AnalyticsResult
 from .redis_client import RedisEventPublisher, CategoryType, InsightType
 from sqlalchemy import desc
+import os
 
 app = FastAPI(
     title="Financial Expense Intelligence API",
