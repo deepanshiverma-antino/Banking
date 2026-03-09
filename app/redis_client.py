@@ -5,6 +5,7 @@ from typing import Dict, Any, List
 import os
 from datetime import datetime
 from enum import Enum
+from config import Config
 
 class CategoryType(str, Enum):
     FoodAndDining = "FoodAndDining"
@@ -23,27 +24,28 @@ class InsightType(str, Enum):
 
 class RedisEventPublisher:
     def __init__(self):
-        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+        redis_url = Config.REDIS_URL
         
         if redis_url.startswith("redis://"):
-            # For production (Render Redis)
+            # For production (AWS ElastiCache/Render Redis)
             self.redis_client = redis.from_url(redis_url, decode_responses=True)
         else:
             # For local development
             self.redis_client = redis.Redis(
-                host=os.getenv("REDIS_HOST", "localhost"),
-                port=int(os.getenv("REDIS_PORT", 6379)),
-                db=int(os.getenv("REDIS_DB", 0)),
+                host=Config.REDIS_HOST,
+                port=Config.REDIS_PORT,
+                db=Config.REDIS_DB,
                 decode_responses=True
             )
         
     def publish_transactions_uploaded(self, batch_id: str):
-        """Publish event when transactions are uploaded"""
+        """Publish transactions uploaded event"""
         event = {
             "batchId": batch_id,
             "timestamp": datetime.utcnow().isoformat()
         }
         self.redis_client.publish("transactions.uploaded", json.dumps(event))
+        print(f" Published transactions.uploaded: {event}")
         
     def publish_transactions_classified(self, batch_id: str, classified_data: List[Dict[str, Any]], ai_processing_time_ms: int):
         """Publish event when transactions are classified"""
@@ -53,6 +55,7 @@ class RedisEventPublisher:
             "aiProcessingTimeMs": ai_processing_time_ms
         }
         self.redis_client.publish("transactions.classified", json.dumps(event))
+        print(f"📡 Published transactions.classified: batchId={batch_id}, dataCount={len(classified_data)}")
         
     def publish_transactions_insight(self, batch_id: str, insights_data: List[Dict[str, Any]]):
         """Publish event when insights are generated"""
@@ -61,6 +64,7 @@ class RedisEventPublisher:
             "data": insights_data
         }
         self.redis_client.publish("transactions.insight", json.dumps(event))
+        print(f"📡 Published transactions.insight: batchId={batch_id}, insightCount={len(insights_data)}")
         
     def publish_transaction_processed(self, transaction_data: Dict[str, Any]):
         """Publish event when transaction is processed and stored (legacy)"""

@@ -1,7 +1,8 @@
+from typing import List, Dict, Any
 from datetime import datetime, timedelta
-from collections import defaultdict, Counter
-from typing import List, Dict
-from ..schemas import CategorizedTransaction, AnalyticsSummary, CategoryTotal, MerchantSpend, MonthlyTrend
+from collections import Counter, defaultdict
+import calendar
+from ..types import CategorizedTransaction, AnalyticsSummary, CategoryTotal, MerchantSpend, MonthlyTrend
 
 class AnalyticsEngine:
     def compute_analytics(self, transactions: List[CategorizedTransaction]) -> AnalyticsSummary:
@@ -34,9 +35,10 @@ class AnalyticsEngine:
             total_investment=round(total_investment, 2),
             net_cash_flow=round(net_cash_flow, 2),
             savings=round(savings, 2),
+            savings_rate=round((savings / total_income * 100) if total_income > 0 else 0, 2),
             category_totals=category_totals,
-            top_5_merchants_by_spend=top_merchants,
-            monthly_spend_trend=monthly_trend,
+            top_merchants=top_merchants,
+            monthly_trend=monthly_trend,
             average_daily_spend=round(average_daily_spend, 2)
         )
     
@@ -47,9 +49,10 @@ class AnalyticsEngine:
             total_investment=0.0,
             net_cash_flow=0.0,
             savings=0.0,
+            savings_rate=0.0,
             category_totals=[],
-            top_5_merchants_by_spend=[],
-            monthly_spend_trend=[],
+            top_merchants=[],
+            monthly_trend=[],
             average_daily_spend=0.0
         )
     

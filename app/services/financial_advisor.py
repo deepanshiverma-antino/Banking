@@ -1,5 +1,5 @@
-from typing import List
-from ..schemas import CategorizedTransaction, AnalyticsSummary, FinancialAdvice
+from typing import List, Dict, Any
+from ..types import CategorizedTransaction, AnalyticsSummary, FinancialAdvice
 
 class FinancialAdvisor:
     def generate_advice(self, transactions: List[CategorizedTransaction], analytics: AnalyticsSummary) -> FinancialAdvice:

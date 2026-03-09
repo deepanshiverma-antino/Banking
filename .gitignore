@@ -36,4 +36,4 @@ htmlcov/
 .mypy_cache/
 
 # Docker
-*.env
+.env.production

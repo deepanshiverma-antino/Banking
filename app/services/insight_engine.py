@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
 from collections import defaultdict
 from typing import List, Dict, Any
-from ..schemas import CategorizedTransaction, Insight
+from ..types import CategorizedTransaction, AnalyticsSummary, Insight
 
 class InsightEngine:
-    def generate_insights(self, transactions: List[CategorizedTransaction]) -> List[Insight]:
+    def generate_insights(self, transactions: List[CategorizedTransaction], analytics: AnalyticsSummary) -> List[Insight]:
         insights = []
         
         if not transactions:
@@ -18,6 +18,12 @@ class InsightEngine:
         
         # Recurring Payments
         insights.extend(self._check_recurring_payments(transactions))
+        
+        # Low Savings Rate
+        insights.extend(self._check_savings_rate(transactions, analytics))
+        
+        # Income vs Expense Balance
+        insights.extend(self._check_income_expense_balance(transactions, analytics))
         
         # Impulse Spending
         insights.extend(self._check_impulse_spending(transactions))
@@ -120,6 +126,28 @@ class InsightEngine:
                         }
                     ))
         
+        return insights
+    
+    def _check_savings_rate(self, transactions: List[CategorizedTransaction], analytics: AnalyticsSummary) -> List[Insight]:
+        insights = []
+        if analytics.savings_rate < 0.1:
+            insights.append(Insight(
+                type='low_savings',
+                message=f"Your savings rate is only {analytics.savings_rate:.1%}, consider increasing it",
+                severity='medium',
+                data={'savings_rate': analytics.savings_rate, 'recommended': 0.2}
+            ))
+        return insights
+    
+    def _check_income_expense_balance(self, transactions: List[CategorizedTransaction], analytics: AnalyticsSummary) -> List[Insight]:
+        insights = []
+        if analytics.net_cash_flow < 0:
+            insights.append(Insight(
+                type='negative_cash_flow',
+                message=f"Your expenses exceed income by ${abs(analytics.net_cash_flow):.2f}",
+                severity='high',
+                data={'net_cash_flow': analytics.net_cash_flow}
+            ))
         return insights
     
     def _check_impulse_spending(self, transactions: List[CategorizedTransaction]) -> List[Insight]:
